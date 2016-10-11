@@ -14,7 +14,6 @@ import sys,tty,termios,string,shutil
 class AdvancedInput():
   def __init__(self):
     self.history = []
-    self.cursor = "> "
     self.controlChars = dict.fromkeys(range(32))
 
 
