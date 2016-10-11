@@ -9,7 +9,7 @@
 # This software is licensed under the Original BSD License
 
 # Imports
-import sys,tty,termios,string,shutil
+import sys,tty,termios,string,shutil,re
 
 class AdvancedInput():
   def __init__(self):
@@ -32,7 +32,12 @@ class AdvancedInput():
     cursor = cursor if cursor else ""
     sys.stdout.write('\r' + ' '*(shutil.get_terminal_size().columns) + '\r',)
     _printable = _buffer.translate(self.controlChars)
-    sys.stdout.write('\r'+cursor + _printable+"\r"+"\x1b[C"*(index+len(cursor)))
+    COLORS = re.compile("\\033\[.{1,2}m")
+    _cursor = cursor
+    for _color in set([x.group() for x in COLORS.finditer(_cursor)]):
+      _cursor=_cursor.replace(_color, "")
+    _cursor    = _cursor.translate(self.controlChars)
+    sys.stdout.write('\r'+cursor + _printable+"\r"+"\x1b[C"*(index+len(_cursor)))
     sys.stdout.flush()
 
 
@@ -47,7 +52,9 @@ class AdvancedInput():
         k=self._getCh()
         if k!='': break
       # Check backspace
-      if k == "\x7F": _buffer = _buffer[:-1]
+      if   k == "\x7F": _buffer = _buffer[:-1]
+      elif k == "\x04": raise EOFError
+      elif k == "\x03": raise KeyboardInterrupt
       else: _buffer+=k
 
       # Delete button pressed
@@ -61,12 +68,14 @@ class AdvancedInput():
         if   arrow=='\x1b[A': # UP
           if _history_index < len(self.history):
             if _history_index == 0: # Store buffer if not in history yet
-              _history_buffer = _buffer
+              _history_buffer = _buffer+_buffer_right
+            _buffer_right = ""
             _history_index += 1
             _buffer = self.history[-_history_index]
         elif arrow=='\x1b[B': # DOWN
           if _history_index > 0:
             _history_index -= 1
+            _buffer_right = ""
             if _history_index == 0: # Restore buffer
               _buffer = _history_buffer
             else:
@@ -83,7 +92,8 @@ class AdvancedInput():
     # Append to history & return
     _buffer = _buffer[:-1] # Strip off return char
     _buffer = _buffer + _buffer_right
-    self.history.append(_buffer)
+    if _buffer: self.history.append(_buffer)
     # Clear line before returning
-    sys.stdout.write('\r'+' ' * (shutil.get_terminal_size().columns) + '\r',)
-    return _buffer
+    sys.stdout.write("\n")
+    #sys.stdout.write('\r'+' ' * (shutil.get_terminal_size().columns) + '\r',)
+    return _buffer.translate(self.controlChars)
