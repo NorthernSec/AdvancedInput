@@ -9,7 +9,7 @@
 # This software is licensed under the Original BSD License
 
 # Imports
-import sys,tty,termios,string,shutil,re
+import sys,tty,termios,shutil,re
 
 class AdvancedInput():
   def __init__(self):
@@ -29,16 +29,33 @@ class AdvancedInput():
 
 
   def _print_buffer(self, _buffer, index=0, cursor=None):
-    cursor = cursor if cursor else ""
-    sys.stdout.write('\r' + ' '*(shutil.get_terminal_size().columns) + '\r',)
-    _printable = _buffer.translate(self.controlChars)
-    COLORS = re.compile("\\033\[.{1,2}m")
-    _cursor = cursor
-    for _color in set([x.group() for x in COLORS.finditer(_cursor)]):
-      _cursor=_cursor.replace(_color, "")
-    _cursor    = _cursor.translate(self.controlChars)
-    sys.stdout.write('\r'+cursor + _printable+"\r"+"\x1b[C"*(index+len(_cursor)))
-    sys.stdout.flush()
+    try:
+      cursor = cursor if cursor else ""
+      _printable = _buffer.translate(self.controlChars)
+      COLORS = re.compile("\\033\[.{1,2}m")
+      _cursor = cursor
+      for _color in set([x.group() for x in COLORS.finditer(_cursor)]):
+        _cursor=_cursor.replace(_color, "")
+      _curslen    = len(_cursor.translate(self.controlChars))
+      cols = shutil.get_terminal_size().columns
+      if _curslen >= cols: raise(Exception("Cursor wrapping not supported yet"))
+      _print = _printable
+      if _curslen+len(_printable) >= cols:
+        _print_len = cols - _curslen
+        if index > _print_len - 1:   # start moving right
+          if index > len(_printable) - _print_len: # last part reached
+            _print = _printable[index-_print_len+1:index+1]
+          else:                                    # keep scrolling
+            _print = _printable[-_print_len+1:]
+        else:                        # stay put
+          _print = _printable[:_print_len]
+      arrow = _curslen + min(index, len(_print))
+      sys.stdout.write('\r' + ' '*(cols) + '\r',)
+      sys.stdout.write('\r'+cursor + _print+"\r"+"\x1b[C"*arrow)
+      sys.stdout.flush()
+    except Exception as e:
+      print(e)
+      raise(e)
 
 
   def input(self, cursor=None):
