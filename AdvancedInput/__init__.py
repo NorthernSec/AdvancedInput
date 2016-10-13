@@ -17,17 +17,6 @@ class AdvancedInput():
     self.controlChars = dict.fromkeys(range(32))
 
 
-  def _getCh(self):
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-      tty.setraw(sys.stdin.fileno())
-      ch = sys.stdin.read(1)
-    finally:
-      termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
-
-
   def _print_buffer(self, _buffer, index=0, cursor=None):
     try:
       cursor = cursor if cursor else ""
@@ -66,7 +55,7 @@ class AdvancedInput():
     self._print_buffer("", cursor=cursor) # Print cursor
     while not _buffer.endswith("\r"):
       while True:
-        k=self._getCh()
+        k=_getCh()
         if k!='': break
       # Check backspace
       if   k == "\x7F": _buffer = _buffer[:-1]
@@ -114,3 +103,36 @@ class AdvancedInput():
     sys.stdout.write("\n")
     #sys.stdout.write('\r'+' ' * (shutil.get_terminal_size().columns) + '\r',)
     return _buffer.translate(self.controlChars)
+
+
+def _getCh():
+  fd = sys.stdin.fileno()
+  old_settings = termios.tcgetattr(fd)
+  try:
+    tty.setraw(sys.stdin.fileno())
+    ch = sys.stdin.read(1)
+  finally:
+    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+  return ch
+
+
+def confirm(default=None):
+  accept =  ['Y', 'y']
+  decline = ['N', 'n']
+  if   default == None:  curs = "[y/n] "
+  elif default == True:
+    curs = "[Y/n] "; accept.append('\r')
+  elif default == False:
+    curs = "[y/N] "; decline.append('\r')
+  sys.stdout.write(curs)
+  sys.stdout.flush()
+  while True:
+    k=_getCh()
+    if k in accept+decline: break
+  print() # New line
+  return True if k in accept else False
+
+
+# Easy to use wrapper if you don't want history
+def get_input(cursor = None):
+  return AdvancedInput().input(cursor)
