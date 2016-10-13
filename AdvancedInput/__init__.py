@@ -64,11 +64,18 @@ class AdvancedInput():
       else: _buffer+=k
 
       # Delete button pressed
-      if    _buffer [-4:] == '\x1b[3~':
+      if    _buffer [-4:] in ['\x1b[3~', '\x1b[5~', '\x1b[6~']:
+        key = _buffer[:-4]
         _buffer = _buffer[:-4]
-        if len(_buffer_right) is not 0: _buffer_right = _buffer_right[1:]
+        if   key=='\x1b[3~': # Delete button
+          if len(_buffer_right) is not 0: _buffer_right = _buffer_right[1:]
+        if   key=='\x1b[5~': # Page-Up button
+          pass
+        if   key=='\x1b[6~': # Page-Up button
+          pass
       # Check if any of the arrow keys are pressed
-      elif  _buffer[-3:] in ['\x1b[A', '\x1b[B', '\x1b[C', '\x1b[D']:
+      elif  _buffer[-3:] in ['\x1b[A', '\x1b[B', '\x1b[C', '\x1b[D',
+                             '\x1b[H', '\x1b[F']:
         arrow = _buffer[-3:]
         _buffer = _buffer[:-3]
         if   arrow=='\x1b[A': # UP
@@ -93,6 +100,13 @@ class AdvancedInput():
         elif arrow=='\x1b[D': # Left
           _buffer_right = _buffer[-1:]+_buffer_right
           _buffer = _buffer[:-1]
+        elif arrow=='\x1b[H': # Home
+          _buffer_right = _buffer+_buffer_right
+          _buffer = ""
+        elif arrow=='\x1b[F': # End
+          _buffer = _buffer+_buffer_right
+          _buffer_right = ""
+
       # Print buffer the clean way
       self._print_buffer(_buffer+_buffer_right, index=len(_buffer), cursor=cursor)
     # Append to history & return
