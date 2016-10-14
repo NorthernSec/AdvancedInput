@@ -47,12 +47,12 @@ class AdvancedInput():
       raise(e)
 
 
-  def input(self, cursor=None):
-    _buffer = ""          # Buffer var
+  def input(self, cursor=None, buffer=None):
+    _buffer = buffer if buffer else ""  # Buffer var
     _buffer_right = ""    # Var for manipulating the buffer with left & right arrow
     _history_index = 0    # For scrolling through the history
     _history_buffer = ""  # Back up buffer while scrolling through history
-    self._print_buffer("", cursor=cursor) # Print cursor
+    self._print_buffer(_buffer, len(_buffer), cursor=cursor) # Print cursor
     while not _buffer.endswith("\r"):
       while True:
         k=_getCh()
@@ -148,5 +148,5 @@ def confirm(default=None):
 
 
 # Easy to use wrapper if you don't want history
-def get_input(cursor = None):
-  return AdvancedInput().input(cursor)
+def get_input(cursor = None, buffer=None):
+  return AdvancedInput().input(cursor, buffer)
