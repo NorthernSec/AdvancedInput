@@ -27,7 +27,6 @@ def bashcomplete(buffer = None, **kwargs):
     for i in _to_diff:
       _diff = ''.join([x[0] for x in (difflib.ndiff(same, i))])
       same = same[:(min(_diff.index('+'), _diff.index('-')))]
-    print((same,match))
     if same == match: # Can't expand the line, ask to return options
       text="Display all %s posibilities?"%(results.count('\n')+1)
       if results.count('\n') < 15 or AdvancedInput.confirm(text):
