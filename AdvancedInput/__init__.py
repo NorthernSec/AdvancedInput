@@ -165,3 +165,10 @@ def confirm(text=None, default=None):
 # Easy to use wrapper if you don't want history
 def get_input(cursor = None, buffer=None):
   return AdvancedInput().input(cursor, buffer)
+
+
+def get_raw_input():
+  buffer = ""
+  while not buffer.endswith("\r"):
+    buffer+=_getCh()
+  return buffer[:-1]
