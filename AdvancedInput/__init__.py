@@ -72,6 +72,9 @@ class AdvancedInput():
           result = _f(buffer=_buffer, rbuffer=_buffer_right, key=_h)
           if result and result.get('buffer'):  _buffer = result.get('buffer')
           if result and result.get('rbuffer'): _buffer_right = result.get('rbuffer')
+          if result and result.get('cursor'):
+              cursor = result.get('cursor')
+              self._print_buffer(_buffer, len(_buffer), cursor=cursor)
           found_hook = True
           break
 
